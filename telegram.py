@@ -1,18 +1,18 @@
 from typing import Tuple, List, Dict, Any
 from dataclasses import dataclass
 import urllib.request
+import urllib.parse
 import json
 import os.path
 import os
 from time import sleep
-from hashlib import sha256
+from hashlib import sha512
 
 from mensa import Mensa, Food, get_mensa_list
 
 @dataclass
 class User:
     id: int
-    name: str
 
     def __get_or_make_path(self) -> str:
         p = f"users/{self.hexdigest()}"
@@ -22,16 +22,13 @@ class User:
     def __load_attributes(self) -> Dict[str, Any]:
         """
         Loads the attributes associated with this user.
-        Creates and initializes the file if user not known yet.
         """
         p = self.__get_or_make_path()
-        with open(p + "/attributes.json", "a+") as f:
-            try:
-                return json.read(f)
-            except:
-                f.seek(0)
-                f.write("{}")
-                return dict()
+        try:
+            with open(p + "/attributes.json", "r") as f:
+                return json.load(f)
+        except:
+            return dict()
     
     def __store_attributes(self, attribs: Dict[str, Any]):
         p = self.__get_or_make_path()
@@ -46,18 +43,20 @@ class User:
 
 
     def get_attribute(self, key: str, default: Any = None):
+        a = self.__load_attributes()
+        print(a)
         return self.__load_attributes().get(key, default)
 
     def hexdigest(self) -> bytes:
         """
         Hashes the user id for privacy.
-        Utilizes salted SHA-256.
+        Utilizes salted SHA-512.
         """
         magic_number = 63378574301438552054793830010137
         salt = "eu96vjdjaCcjEQx5DsJCJVuX"
         n = self.id * magic_number
         s = str(n) + salt + hex(n)
-        hashobj = sha256(s.encode("ascii"))
+        hashobj = sha512(s.encode("ascii"))
         return hashobj.hexdigest()
 
     def __hash__(self) -> int:
@@ -100,29 +99,36 @@ class Bot:
             if user_dict["is_bot"]:
                 continue
 
-            user = User(id=user_dict["id"], name=user_dict.get("first_name", "Max Mustermann"))
+            user = User(id=user_dict["id"])
+            user.set_attribute("chat_id", chat["id"])
             
-            self.__handle_message(message, chat, user)
+            self.__handle_message(message, user)
             self.__update_highest_update_id(u_id)
             sleep(0.5)
     
-    def __handle_message(self, message: Dict, chat: Dict, user: User):
+    def __handle_message(self, message: Dict, user: User):
         text = message["text"]
-        m_id = message["message_id"]
+        cid = user.get_attribute("chat_id")
         print(text)
 
         if text == "/start":
             msg = "\n".join(
                 [
-                    f"Willkommen, {user.name}!"
+                    f"Willkommen, {user.name}!",
                     f"Bitte wähle eine oder mehrere der verfügbaren Mensen aus!"
                 ]
                 +
                 [str(m) for m in get_mensa_list()]
             )
-            self.__send_message(msg, int(chat["id"]))
+            self.__send_message(msg, cid)
+        
+        if text == "/list":
+            msg = "\n".join(f"{m.id} {m.name}" for m in get_mensa_list())
+            self.__send_message(msg, cid)
 
     def __send_message(self, message: str, chat_id: int):
+        print(chat_id)
+        message = urllib.parse.quote(message, safe="")
         self.__execute(f"sendMessage?chat_id={chat_id}&text={message}")
     
     def update(self):
