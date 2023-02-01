@@ -21,7 +21,6 @@ class Mensa:
             return list()
         foods = [Food(name=row["name"], price=row["price"]["student"]) for row in food_table]
         return foods
-
     
     def __hash__(self) -> int:
         return hash(id)
