@@ -1,0 +1,5 @@
+VEGAN_EMOJI = "🌱"
+VEGGIE_EMOJI = "🍆"
+PORK_EMOJI = "🐷"
+BEEF_EMOJI = "🐮"
+POULTRY_EMOJI = "🐔"

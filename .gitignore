@@ -1,9 +1,7 @@
 # TOKEN FILE
 token
-# PROGRESS FILE
-progress
-# USERS FOLDER
-users/
+# DATABASE FILE
+*.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

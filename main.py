@@ -12,6 +12,7 @@ if __name__ == "__main__":
     c = DB.cursor()
     print(c.execute("SELECT * FROM user").fetchall())
     print(c.execute("SELECT * FROM config").fetchall())
+    c.close()
 
     while True:
         bot.update()
