@@ -65,7 +65,10 @@ class Bot:
         updates = res["result"]
         for update in updates:
             u_id = update["update_id"]
-            message = update["message"]
+            self.__update_highest_update_id(u_id)
+            message = update.get("message", None)
+            if not message:
+                continue
             user_dict = message["from"]
             chat = message["chat"]
             if user_dict["is_bot"]:
@@ -74,7 +77,6 @@ class Bot:
             user = User(id=user_dict["id"])
             
             self.__handle_message(message, user)
-            self.__update_highest_update_id(u_id)
             sleep(0.5)
     
     def __handle_message(self, message: Dict, user: User):
